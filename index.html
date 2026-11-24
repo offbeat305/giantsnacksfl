@@ -37,7 +37,10 @@
   color-scheme:light;
 }
 *{box-sizing:border-box}
-body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+html{overflow-x:clip;max-width:100%;overscroll-behavior-x:none}
+body{position:relative;width:100%;max-width:100%;overflow-x:clip;touch-action:pan-y pinch-zoom;margin:0;background:var(--ground);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
+main,footer{overflow-x:clip;max-width:100vw}
+@supports not (overflow:clip){html,body,main,footer{overflow-x:hidden}}
 img{max-width:100%;display:block}
 a{color:inherit}
 button{font-family:inherit}
@@ -122,7 +125,8 @@ nav.main a[aria-current="page"]{color:var(--ink);background:var(--sun)}
 @media(max-width:900px){.hero .wrap{grid-template-columns:1fr;padding-top:40px;padding-bottom:56px}.stage{height:300px;--R:200px;--cw:104px;--ch:146px}.stats{gap:22px}.stats b{font-size:2rem}}
 
 /* tape marquee */
-.tape{background:var(--sun);color:var(--ink);transform:rotate(-1.6deg) scale(1.03);margin:-26px 0 0;position:relative;z-index:3;box-shadow:0 14px 30px -16px rgba(0,0,0,.5);overflow:hidden;padding:14px 0}
+.tape{background:var(--sun);color:var(--ink);transform:rotate(-1.6deg) scale(1.03);margin:0;position:relative;z-index:3;box-shadow:0 14px 30px -16px rgba(0,0,0,.5);overflow:hidden;padding:14px 0}
+.tape-wrap{overflow:hidden;margin-top:-34px;padding:10px 0 16px;position:relative;z-index:3}
 .tape .track{display:flex;gap:0;width:max-content;animation:slide 46s linear infinite}
 .tape:hover .track{animation-play-state:paused}
 .tape button{font:800 1.5rem var(--display);letter-spacing:-.02em;white-space:nowrap;background:none;border:0;color:inherit;cursor:pointer;padding:0 6px;display:flex;align-items:center;gap:22px;margin-right:22px;transition:color .15s}
@@ -158,7 +162,7 @@ nav.main a[aria-current="page"]{color:var(--ink);background:var(--sun)}
 .arrows{display:flex;gap:8px}
 .arrows button{width:48px;height:48px;border-radius:50%;border:2px solid rgba(255,255,255,.4);background:transparent;color:#fff;font-size:1.2rem;cursor:pointer;transition:background .15s,color .15s,transform .15s}
 .arrows button:hover{background:var(--sun);color:var(--ink);border-color:var(--sun);transform:scale(1.08)}
-.rail{display:flex;gap:18px;overflow-x:auto;scroll-snap-type:x mandatory;padding:60px 22px 30px;margin:0 -22px;scrollbar-width:none}
+.rail{touch-action:pan-x pan-y;display:flex;gap:18px;overflow-x:auto;scroll-snap-type:x mandatory;padding:60px 22px 30px;margin:0 -22px;scrollbar-width:none}
 .rail::-webkit-scrollbar{display:none}
 .rail .f{scroll-snap-align:start;flex:0 0 230px;min-width:0;background:var(--ink-2);border:1px solid rgba(255,255,255,.12);border-radius:22px;padding:0 18px 18px;cursor:pointer;color:#fff;text-align:left;position:relative}
 .rail .f:hover{background:#1b3364;box-shadow:0 30px 40px -24px rgba(0,0,0,.8)}
@@ -369,7 +373,25 @@ footer .fine{margin-top:30px;padding-top:18px;border-top:1px solid rgba(255,255,
 .toast.on{transform:translate(-50%,0)}
 .toast b{color:var(--sun)}
 
-@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+/* touch: the card nearest the middle of the screen gets the hover look */
+.tilt.hov{--rx:5deg;--ry:-7deg}
+.tilt.hov:nth-child(even){--ry:7deg}
+.tilt.hov .pop{transform:translateZ(46px) scale(1.08)}
+.cat.hov{box-shadow:0 34px 50px -26px color-mix(in srgb,var(--c) 70%,#000)}
+.cat.hov .imgs img:nth-child(1){transform:rotate(-20deg) translate(-16px,-10px) scale(.94)}
+.cat.hov .imgs img:nth-child(2){transform:rotate(14deg) translate(10px,-16px) scale(1.08)}
+.cat.hov small i{transform:translateX(6px)}
+.p.hov{box-shadow:0 34px 44px -26px color-mix(in srgb,var(--c) 60%,#0b1730);z-index:2}
+.p.hov .pic::after{opacity:1}
+.rail .f.hov{background:#1b3364;box-shadow:0 30px 40px -24px rgba(0,0,0,.8)}
+.tile.hov{transform:translateY(-8px) rotate(-1deg);background:var(--ink);color:#fff}
+.tile.hov p{color:#b9c6de}
+.tile.hov .n{color:var(--sun);-webkit-text-stroke:0}
+.ci.hov{transform:translateY(-5px);border-color:var(--ink);box-shadow:0 18px 26px -18px rgba(11,23,48,.5)}
+.counties span.hov{background:var(--sun);color:var(--ink);border-color:var(--sun);transform:rotate(-3deg) scale(1.08)}
+.who li.hov{transform:translateY(-4px);background:var(--sun)}
+@media(max-width:900px){.tape button{font-size:1.2rem}.tape .track{animation-duration:38s}}
+
 @media print{
   @page{margin:11mm}
   header.site,footer,.page-head,.ctabs,.modal,.toast{display:none!important}
@@ -431,7 +453,7 @@ footer .fine{margin-top:30px;padding-top:18px;border-top:1px solid rgba(255,255,
       <div class="stage" id="stage" aria-hidden="true"><div class="ring" id="ring"></div></div>
     </div>
   </section>
-  <div class="tape" aria-label="Brands we carry"><div class="track" id="tape"></div></div>
+  <div class="tape-wrap"><div class="tape" aria-label="Brands we carry"><div class="track" id="tape"></div></div></div>
 
   <section>
     <div class="wrap">
@@ -652,7 +674,7 @@ const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const title=p=>`${p.brand} ${p.line}, ${p.name}`;
 const byImg=k=>P.find(p=>p.img===k);
-const REDUCED=matchMedia("(prefers-reduced-motion: reduce)").matches;
+const REDUCED=false;
 const ph=p=>`<div class="ph" style="background:${BRAND_COLOR[p.brand]||"#0b1730"}"><div>${esc(p.brand)}<small>${esc(p.name)}</small></div></div>`;
 const pic=p=>p.img?`<img loading="lazy" class="pop" src="img/${p.img}.webp" alt="${esc(title(p))}${p.size?", "+esc(p.size):""}">`:ph(p);
 
@@ -785,15 +807,38 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal()});
 
 /* ---------- 3D tilt on cards ---------- */
 let tiltEl=null;
-if(!REDUCED&&matchMedia("(hover:hover)").matches){
+const TOUCH=!matchMedia("(hover:hover)").matches;
+function tiltTo(c,cx,cy){
+  const r=c.getBoundingClientRect(),x=(cx-r.left)/r.width,y=(cy-r.top)/r.height;
+  c.classList.add("live");c.style.setProperty("--ry",((x-.5)*16).toFixed(2)+"deg");c.style.setProperty("--rx",((.5-y)*14).toFixed(2)+"deg");
+  c.style.setProperty("--mx",(x*100).toFixed(0)+"%");c.style.setProperty("--my",(y*100).toFixed(0)+"%");
+}
+function untilt(){if(tiltEl){tiltEl.classList.remove("live");tiltEl.style.removeProperty("--rx");tiltEl.style.removeProperty("--ry");tiltEl=null}}
+if(!TOUCH){
   document.addEventListener("pointermove",e=>{
     const c=e.target.closest&&e.target.closest(".tilt");
-    if(tiltEl&&tiltEl!==c){tiltEl.classList.remove("live");tiltEl.style.removeProperty("--rx");tiltEl.style.removeProperty("--ry");tiltEl=null}
+    if(tiltEl&&tiltEl!==c)untilt();
     if(!c)return;
-    const r=c.getBoundingClientRect(),x=(e.clientX-r.left)/r.width,y=(e.clientY-r.top)/r.height;
-    c.classList.add("live");c.style.setProperty("--ry",((x-.5)*16).toFixed(2)+"deg");c.style.setProperty("--rx",((.5-y)*14).toFixed(2)+"deg");
-    c.style.setProperty("--mx",(x*100).toFixed(0)+"%");c.style.setProperty("--my",(y*100).toFixed(0)+"%");tiltEl=c;
+    tiltTo(c,e.clientX,e.clientY);tiltEl=c;
   },{passive:true});
+}else{
+  /* finger on a card tilts it toward the finger */
+  document.addEventListener("touchstart",e=>{const c=e.target.closest&&e.target.closest(".tilt");untilt();if(c){const p=e.touches[0];tiltTo(c,p.clientX,p.clientY);tiltEl=c}},{passive:true});
+  document.addEventListener("touchmove",e=>{if(tiltEl){const p=e.touches[0];tiltTo(tiltEl,p.clientX,p.clientY)}},{passive:true});
+  document.addEventListener("touchend",untilt,{passive:true});document.addEventListener("touchcancel",untilt,{passive:true});
+  /* while scrolling, whatever sits in the middle band of the screen gets the hover look */
+  let ticking=false;
+  function sweep(){
+    ticking=false;
+    const h=innerHeight,lo=h*.3,hi=h*.7;
+    document.querySelectorAll(".view.on .tilt,.view.on .tile,.view.on .ci,.view.on .counties span,.view.on .who li").forEach(el=>{
+      const r=el.getBoundingClientRect();if(r.bottom<-200||r.top>h+200){el.classList.remove("hov");return}
+      const m=r.top+r.height/2;el.classList.toggle("hov",m>lo&&m<hi);
+    });
+  }
+  const ask=()=>{if(!ticking){ticking=true;requestAnimationFrame(sweep)}};
+  addEventListener("scroll",ask,{passive:true});addEventListener("resize",ask);document.addEventListener("click",()=>setTimeout(ask,120));
+  setTimeout(ask,400);
 }
 
 /* ---------- hero 3D ring ---------- */
