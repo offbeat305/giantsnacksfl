@@ -238,6 +238,11 @@ select{font:600 .95rem var(--body);padding:14px 16px;border:2px solid var(--line
 .chip{--c:var(--ink);white-space:nowrap;font:700 .9rem var(--body);background:#fff;border:2px solid var(--line);border-radius:999px;padding:9px 16px;cursor:pointer;color:var(--ink);transition:transform .15s,border-color .15s,background .15s}
 .chip:hover{transform:translateY(-2px);border-color:var(--ink)}
 .chip[aria-pressed=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.chips.co .chip{font-size:1rem;padding:11px 18px;border-color:var(--ink)}
+.chips.co .chip small{font-weight:600;opacity:.6;margin-left:6px}
+.chips.co .chip[aria-pressed=true]{background:var(--hot);border-color:var(--hot)}
+.chiplabel{font:800 .74rem var(--body);text-transform:uppercase;letter-spacing:.12em;color:var(--ink-soft);margin:4px 0 8px}
+@media(max-width:900px){.chips.co{flex-wrap:nowrap;overflow-x:auto;touch-action:pan-x pan-y;margin:0 -22px 12px;padding:0 22px 6px;scrollbar-width:none}.chips.co::-webkit-scrollbar{display:none}.chips.co .chip{flex:none}}
 .meta{display:flex;align-items:center;gap:8px;color:var(--ink-soft);font-size:.92rem;margin-bottom:18px;flex-wrap:wrap}
 .meta b{color:var(--ink);font:800 1.1rem var(--display)}
 .pill{background:var(--sun);color:var(--ink);border:0;border-radius:999px;padding:5px 10px 5px 12px;font:700 .82rem var(--body);cursor:pointer;display:inline-flex;gap:6px;align-items:center}
@@ -566,10 +571,11 @@ footer .fine{margin-top:30px;padding-top:18px;border-top:1px solid rgba(255,255,
   <div class="page-head"><div class="wrap">
     <p class="eyebrow" style="color:var(--sun)">Products</p>
     <h1>Find it. Stock it. Sell it.</h1>
-    <p class="lead">Search or filter by category, brand and pack size. Tap any pack for details, then add it to your quote list.</p>
+    <p class="lead">Filter by company, category, brand and pack size, or search. Tap any pack for details, then add it to your quote list.</p>
   </div></div>
   <div class="wrap shop">
     <aside class="filters" id="filters" aria-label="Filters">
+      <h3>Company</h3><div id="f-company"></div>
       <h3>Category</h3><div id="f-cat"></div>
       <h3>Pack size</h3><div id="f-size"></div>
       <h3>Brand</h3><div id="f-brand" class="brandlist"></div>
@@ -580,6 +586,9 @@ footer .fine{margin-top:30px;padding-top:18px;border-top:1px solid rgba(255,255,
         <select id="sort" aria-label="Sort"><option value="cat">Sort: by category</option><option value="brand">Brand A–Z</option><option value="small">Size: small to large</option><option value="large">Size: large to small</option></select>
         <button class="btn btn-ghost btn-sm filter-toggle" id="ftoggle" aria-expanded="false">Filters</button>
       </div>
+      <div class="chiplabel">Shop by company</div>
+      <div class="chips co" id="cochips" role="group" aria-label="Filter by company"></div>
+      <div class="chiplabel">Category</div>
       <div class="chips" id="chips" role="group" aria-label="Quick categories"></div>
       <div class="meta" id="meta" aria-live="polite"></div>
       <div id="results"></div>
@@ -723,14 +732,19 @@ document.addEventListener("click",e=>{
 });
 
 /* ---------- filters ---------- */
-const state={q:"",cat:new Set(),size:new Set(),brand:new Set(),sort:"cat"};
+const FRITO=["Frito-Lay","Rold Gold","Funyuns","Doritos","Ruffles","SunChips","Smartfood","Lay's","Cheetos","PopCorners","Chester's","Cracker Jack","Tostitos","Fritos"],FIRE=["Kool-Aid","Warheads","Airheads","Milky Way","Snickers","Twix","Playboy"];
+P.forEach(p=>p.company=FRITO.includes(p.brand)?"Frito-Lay":FIRE.includes(p.brand)?"Fire Brands":p.brand);
+const companies=[...new Set(P.map(p=>p.company))].sort((a,b)=>P.filter(p=>p.company===b).length-P.filter(p=>p.company===a).length);
+const state={q:"",company:new Set(),cat:new Set(),size:new Set(),brand:new Set(),sort:"cat"};
 const brands=[...new Set(P.map(p=>p.brand))].sort((a,b)=>a.localeCompare(b));
-const keyOf={cat:p=>p.cat,size:p=>p.bucket,brand:p=>p.brand};
+const keyOf={company:p=>p.company,cat:p=>p.cat,size:p=>p.bucket,brand:p=>p.brand};
 function checks(host,key,list,hint){
   host.innerHTML=list.map((v,i)=>{const n=P.filter(p=>keyOf[key](p)===v).length;
     return `<label for="f-${key}-${i}"><input type="checkbox" id="f-${key}-${i}" data-k="${key}" value="${esc(v)}">${esc(v)}${hint&&hint[v]?` <small>${hint[v]}</small>`:""}<span>${n}</span></label>`}).join("");
 }
-checks($("#f-cat"),"cat",CAT_ORDER);checks($("#f-size"),"size",SIZE_ORDER,SIZE_HINT);checks($("#f-brand"),"brand",brands);
+checks($("#f-company"),"company",companies);checks($("#f-cat"),"cat",CAT_ORDER);
+$("#cochips").innerHTML=`<button class="chip" data-co="">All companies</button>`+companies.map(c=>`<button class="chip" data-co="${esc(c)}">${esc(c)}<small>${P.filter(p=>p.company===c).length}</small></button>`).join("");
+$("#cochips").addEventListener("click",e=>{const b=e.target.closest("[data-co]");if(!b)return;const v=b.dataset.co;if(!v)state.company.clear();else state.company.has(v)?state.company.delete(v):state.company.add(v);state.brand.clear();syncChecks();render()});checks($("#f-size"),"size",SIZE_ORDER,SIZE_HINT);checks($("#f-brand"),"brand",brands);
 $("#chips").innerHTML=`<button class="chip" data-chip="">All products</button>`+CAT_ORDER.map(c=>`<button class="chip" data-chip="${esc(c)}">${esc(c)}</button>`).join("");
 $("#filters").addEventListener("change",e=>{const i=e.target;if(!i.dataset.k)return;i.checked?state[i.dataset.k].add(i.value):state[i.dataset.k].delete(i.value);render()});
 $("#chips").addEventListener("click",e=>{const b=e.target.closest("[data-chip]");if(!b)return;state.cat.clear();if(b.dataset.chip)state.cat.add(b.dataset.chip);syncChecks();render()});
@@ -741,14 +755,15 @@ $("#meta").addEventListener("click",e=>{
   const p=e.target.closest("[data-unk]"); if(p){if(p.dataset.unk==="q"){state.q="";$("#q").value=""}else state[p.dataset.unk].delete(p.dataset.v);syncChecks();render();return}
   if(e.target.closest(".clear")){resetFilters();render()}
 });
-function resetFilters(){state.q="";state.cat.clear();state.size.clear();state.brand.clear();$("#q").value="";syncChecks()}
+function resetFilters(){state.q="";state.company.clear();state.cat.clear();state.size.clear();state.brand.clear();$("#q").value="";syncChecks()}
 function syncChecks(){$$("#filters input").forEach(i=>i.checked=state[i.dataset.k].has(i.value))}
 const norm=s=>s.toLowerCase().replace(/[’']/g,"").normalize("NFD").replace(/[̀-ͯ]/g,"");
 function match(p){
   if(state.cat.size&&!state.cat.has(p.cat))return false;
   if(state.size.size&&!state.size.has(p.bucket))return false;
   if(state.brand.size&&!state.brand.has(p.brand))return false;
-  if(state.q){const hay=norm(`${p.brand} ${p.line} ${p.name} ${p.size} ${p.cat} ${p.sub||""} ${p.upc||""}`);
+  if(state.company.size&&!state.company.has(p.company))return false;
+  if(state.q){const hay=norm(`${p.company} ${p.brand} ${p.line} ${p.name} ${p.size} ${p.cat} ${p.sub||""} ${p.upc||""}`);
     return norm(state.q).split(/\s+/).every(w=>hay.includes(w))}
   return true;
 }
@@ -768,8 +783,9 @@ function render(){
   if(s==="large")list.sort((a,b)=>oz(b)-oz(a));
   const pills=[];
   if(state.q)pills.push(`<button class="pill" data-unk="q">“${esc(state.q)}”</button>`);
-  ["cat","size","brand"].forEach(k=>state[k].forEach(v=>pills.push(`<button class="pill" data-unk="${k}" data-v="${esc(v)}">${esc(v)}</button>`)));
+  ["company","cat","size","brand"].forEach(k=>state[k].forEach(v=>pills.push(`<button class="pill" data-unk="${k}" data-v="${esc(v)}">${esc(v)}</button>`)));
   $("#meta").innerHTML=`<b>${list.length}</b> of ${P.length} products ${pills.join("")}${pills.length?'<button class="clear">Clear all</button>':""}`;
+  $$("#cochips .chip").forEach(c=>c.setAttribute("aria-pressed",c.dataset.co?state.company.has(c.dataset.co):state.company.size===0));
   $$("#chips .chip").forEach(c=>c.setAttribute("aria-pressed",c.dataset.chip?(state.cat.size===1&&state.cat.has(c.dataset.chip)):state.cat.size===0));
   const r=$("#results");
   if(!list.length){r.innerHTML=`<div class="empty"><b>No products match those filters.</b><br>Try a different search, or <a data-go="contact" style="cursor:pointer;text-decoration:underline">ask us</a>. We may be able to get it.</div>`;return}
@@ -792,7 +808,7 @@ function openView(id){
   <div class="big">${p.img?`<img src="img/${p.img}.webp" alt="${esc(title(p))}">`:ph(p)}</div>
   <div class="info-q"><div class="br" style="color:var(--hot);font-weight:800;letter-spacing:.1em;text-transform:uppercase;font-size:.8rem">${esc(p.brand)}</div>
   <h3>${esc(p.name)}</h3><div style="color:var(--ink-soft)">${esc(p.line)}</div>
-  <table><tr><td>Size</td><td>${p.size?esc(p.size):"On request"}</td></tr><tr><td>Category</td><td>${esc(p.cat)}</td></tr>${p.bucket?`<tr><td>Pack type</td><td>${esc(p.bucket)}</td></tr>`:""}${p.case?`<tr><td>Case count</td><td>${p.case} per case</td></tr>`:""}${p.upc?`<tr><td>UPC</td><td>${esc(p.upc)}</td></tr>`:""}${p.note?`<tr><td>Status</td><td>${esc(p.note)}</td></tr>`:""}</table>
+  <table><tr><td>Size</td><td>${p.size?esc(p.size):"On request"}</td></tr>${p.company!==p.brand?`<tr><td>Company</td><td>${esc(p.company)}</td></tr>`:""}<tr><td>Category</td><td>${esc(p.cat)}</td></tr>${p.bucket?`<tr><td>Pack type</td><td>${esc(p.bucket)}</td></tr>`:""}${p.case?`<tr><td>Case count</td><td>${p.case} per case</td></tr>`:""}${p.upc?`<tr><td>UPC</td><td>${esc(p.upc)}</td></tr>`:""}${p.note?`<tr><td>Status</td><td>${esc(p.note)}</td></tr>`:""}</table>
   <button class="addbtn" data-add="${p.id}" aria-pressed="${on}" style="padding:14px;font-size:1rem">${on?"✓ On quote list":"Add to quote list"}</button>
   <button class="btn btn-ghost btn-sm" data-brand="${esc(p.brand)}" style="justify-content:center;margin-top:8px">See everything from ${esc(p.brand)}</button>
   ${sib.length?`<div style="font-weight:800;font-size:.76rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);margin-top:16px">More from ${esc(p.brand)}</div><div class="sibs">${sib.map(x=>`<button data-view="${x.id}" title="${esc(title(x))} ${esc(x.size)}">${x.img?`<img src="img/${x.img}.webp" alt="">`:`<div style="height:50px;border-radius:8px;background:${BRAND_COLOR[x.brand]||"#0b1730"}"></div>`}${esc(x.size||x.name).slice(0,12)}</button>`).join("")}</div>`:""}</div>`;
