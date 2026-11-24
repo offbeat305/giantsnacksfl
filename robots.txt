@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://giantsnacksfl.com/sitemap.xml
